@@ -2,7 +2,7 @@
 const express = require('express');
 const cors = require('cors');
 const session = require('express-session');
-const connectDB = require('./configs/db');
+const connectDB = require('./db');
 
 // Routers
 const loginRouter = require('./routers/auth/loginRouter');
@@ -14,13 +14,18 @@ const subscribersRouter = require('./routers/subscribersRouter');
 const app = express();
 const PORT = process.env.PORT || 3000; // Use Render-assigned port if available
 
+// Connect to MongoDB
 connectDB();
 
 // Middleware
 app.use(cors({
-  origin: 'https://movies-management-site.web.app', // Firebase frontend URL
+  origin: [
+    'https://tal264.github.io/fullstack-project-2', // GitHub Pages frontend
+    'http://localhost:3000',                        // optional: for local development
+  ],
   credentials: true, // allow cookies to be sent
 }));
+
 app.use(express.json());
 
 app.use(
