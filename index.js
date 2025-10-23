@@ -1,56 +1,61 @@
-// Dependencies & DB connection
-const express = require('express');
-const cors = require('cors');
-const session = require('express-session');
-const connectDB = require('./db');
+require('dotenv').config(); // load .env
+const express = require("express");
+const cors = require("cors");
+const session = require("express-session");
+const connectDB = require("./db");
 
 // Routers
-const loginRouter = require('./routers/auth/loginRouter');
-const usersRouter = require('./routers/usersRouter');
-const moviesRouter = require('./routers/moviesRouter');
-const membersRouter = require('./routers/membersRouter');
-const subscribersRouter = require('./routers/subscribersRouter');
+const loginRouter = require("./routers/auth/loginRouter");
+const usersRouter = require("./routers/usersRouter");
+const moviesRouter = require("./routers/moviesRouter");
+const membersRouter = require("./routers/membersRouter");
+const subscribersRouter = require("./routers/subscribersRouter");
 
 const app = express();
-const PORT = process.env.PORT || 3000; // Use Render-assigned port if available
 
-// Connect to MongoDB
+// Connect to MongoDB Atlas
 connectDB();
 
 // Middleware
 app.use(cors({
   origin: [
-    'https://tal264.github.io/fullstack-project-2', // GitHub Pages frontend
-    'http://localhost:3000',                        // optional: for local development
+    "https://tal264.github.io/fullstack-project-2", // correct GitHub Pages path
+    "http://localhost:3000", // local dev
   ],
-  credentials: true, // allow cookies to be sent
+  credentials: true,
 }));
 
 app.use(express.json());
 
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || 'your-secret-key', // use env variable for security
-    resave: false,
-    saveUninitialized: false,
-    cookie: { maxAge: 1000 * 60 * 60 }, // 1 hour
-  })
-);
+// Required when using secure cookies behind a proxy (Render, etc.)
+app.set("trust proxy", 1);
 
-// Mount routers
-app.use('/auth', loginRouter);
-app.use('/users', usersRouter);
-app.use('/movies', moviesRouter);
-app.use('/members', membersRouter);
-app.use('/subscribers', subscribersRouter);
+app.use(session({
+  secret: process.env.SESSION_SECRET || "your-secret-key",
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    maxAge: 1000 * 60 * 60, // 1 hour
+    sameSite: "none",
+    secure: true, // must be true for HTTPS (Render + GitHub Pages)
+  }
+}));
 
-// Health check endpoint (for Render)
-app.get('/healthz', (req, res) => res.send('OK'));
+// Routers
+app.use("/auth", loginRouter);
+app.use("/users", usersRouter);
+app.use("/movies", moviesRouter);
+app.use("/members", membersRouter);
+app.use("/subscribers", subscribersRouter);
 
-// Default route
-app.get('/', (req, res) => {
-  res.send('Server is running and connected to MongoDB!');
+// Health check endpoint
+app.get("/healthz", (req, res) => res.send("OK"));
+
+// Root route
+app.get("/", (req, res) => {
+  res.send("Server is running and connected to MongoDB!");
 });
 
 // Start server
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
